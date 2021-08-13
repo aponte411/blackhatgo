@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 	"sort"
 )
 
-func worker(ports, results chan int) {
+func worker(ports, results chan int, url string) {
 	for p := range ports {
-		address := fmt.Sprintf("scanme.nmap.org:%d", p)
+		address := fmt.Sprintf("%s:%d", url, p)
 		conn, err := net.Dial("tcp", address)
 		if err != nil {
 			results <- 0
@@ -20,6 +21,8 @@ func worker(ports, results chan int) {
 }
 
 func main() {
+	url := os.Args[1]
+	fmt.Printf("Scanning open ports for %s \n", url)
 	// Setup ports and results channels
 	ports := make(chan int, 100)
 	results := make(chan int)
@@ -27,7 +30,7 @@ func main() {
 	var openports []int
 	// Set up workers for each port connection
 	for i := 0; i < cap(ports); i++ {
-		go worker(ports, results)
+		go worker(ports, results, url)
 	}
 	// send a ports\ to the workers in a seperate goroutine
 	go func() {
